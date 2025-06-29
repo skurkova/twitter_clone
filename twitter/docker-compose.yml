@@ -1,0 +1,52 @@
+version: '3.2'
+services:
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - my_network
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - my_network
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=twitter
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - logging_collector=on
+      - log_directory=/var/log/postgresql
+      - log_filename=postgresql-%Y-%m-%d.log
+      - log_statement=none
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d twitter -U admin" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+    ports:
+      - '5432:5432'
+    networks:
+      - my_network
+    volumes:
+      - ./db/:/var/lib/postgresql/data
+      - ./logs:/var/log/postgresql
+
+networks:
+  my_network:
+    driver: bridge

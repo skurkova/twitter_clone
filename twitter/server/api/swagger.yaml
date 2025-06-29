@@ -1,0 +1,623 @@
+openapi: 3.0.0
+info:
+  title: Twitter
+  description: API для корпоративного сервиса микроблога
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local server
+
+tags:
+  - name: Users
+    description: Операции с пользователями
+  - name: Tweets
+    description: Операции с твитами
+  - name: Media
+    description: Операции с медиафайлами
+  - name: Likes
+    description: Операции с лайками
+  - name: Follow
+    description: Операции с подписками
+
+paths:
+  /:
+    get:
+      summary: Заполнить базу данных пользователями
+      responses:
+        '200':
+          description: Database populated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  message:
+                    type: string
+  /api:
+    get:
+      summary: Главная страница API
+      description: Возвращает HTML-страницу API.
+      responses:
+        200:
+          description: HTML-страница успешно возвращена.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/tweets:
+    post:
+      tags:
+        - Tweets
+      summary: Создать новый твит
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                tweet_data:
+                  type: string
+                  description: Текст твита
+                tweet_media_ids:
+                  type: array
+                  items:
+                    type: integer
+                  description: ID медиафайлов
+      responses:
+        '200':
+          description: Твит успешно создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  tweet_id:
+                    type: integer
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+    get:
+      tags:
+        - Tweets
+      summary: Получить ленту твитов
+      responses:
+        '200':
+          description: Лента твитов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  tweets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        content:
+                          type: string
+                        attachments:
+                          type: array
+                          items:
+                            type: object
+                            items:
+                              $ref: '#/components/schemas/Media'
+                        author:
+                          type: object
+                          items:
+                            $ref: '#/components/schemas/User'
+                        likes:
+                          type: array
+                          items:
+                            type: object
+                            items:
+                              $ref: '#/components/schemas/Like'
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/tweets/{tweet_id}:
+    delete:
+      tags:
+        - Tweets
+      summary: Удалить твит
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: integer
+          description: ID твита
+      responses:
+        '200':
+          description: Твит успешно удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+        '400':
+          description: Твит не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/tweets/{tweet_id}/likes:
+    post:
+      tags:
+        - Likes
+      summary: Поставить лайк на твит
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: integer
+          description: ID твита
+      responses:
+        '200':
+          description: Лайк успешно добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+        '400':
+          description: Твит не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - Likes
+      summary: Убрать лайк с твита
+      parameters:
+        - in: path
+          name: tweet_id
+          required: true
+          schema:
+            type: integer
+          description: ID твита
+      responses:
+        '200':
+          description: Лайк успешно удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+        '400':
+          description: Лайк не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/medias:
+    post:
+      tags:
+        - Media
+      summary: Загрузить файлы из твита
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Файл для загрузки
+      responses:
+        '200':
+          description: Файл успешно загружен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  media_id:
+                    type: integer
+        '400':
+          description: Файл не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/users/{user_id}/follow:
+    post:
+      tags:
+        - Follow
+      summary: Зафоловить другого пользователя
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя
+      responses:
+        '200':
+          description: Подписка успешно добавлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - Follow
+      summary: Отписаться от другого пользователя
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя
+      responses:
+        '200':
+          description: Подписка успешно удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+        '400':
+          description: Подписка не найдена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/users/me:
+    get:
+      tags:
+        - Users
+      summary: Получить информацию о своём профиле
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      followers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      following:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+  /api/users/{user_id}:
+    get:
+      tags:
+        - Users
+      summary: Получить информацию о профиле по ID
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      followers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      following:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                  error_type:
+                    type: string
+                  error_message:
+                    type: string
+      security:
+        - ApiKeyAuth: []
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        api_key:
+          type: string
+      required:
+        - id
+        - name
+        - api_key
+
+    Tweet:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        content:
+          type: string
+        medias_ids:
+          type: array
+          items:
+            type: integer
+        count_likes:
+          type: integer
+        author:
+          $ref: '#/components/schemas/User'
+        likes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Like'
+        medias:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        file_path:
+          type: string
+        tweet_id:
+          type: integer
+      required:
+        - id
+        - filename
+        - file_path
+        - tweet_id
+
+    Like:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        tweet_id:
+          type: integer
+      required:
+        - id
+        - user_id
+        - tweet_id
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: api-key
