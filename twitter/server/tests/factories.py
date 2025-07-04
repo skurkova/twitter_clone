@@ -3,7 +3,7 @@ import string
 
 import factory
 
-from twitter.server.db.models import User, db
+from db.models import User, db
 
 
 class UserFactory(factory.alchemy.SQLAlchemyModelFactory):

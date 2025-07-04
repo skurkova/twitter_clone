@@ -3,8 +3,8 @@ from faker import Faker
 from typing import Any
 from flask_sqlalchemy import SQLAlchemy
 
-from twitter.server.db.models import User
-from twitter.server.tests.factories import UserFactory
+from db.models import User
+from factories import UserFactory
 
 fake = Faker("en_US")
 
@@ -14,10 +14,8 @@ def test_create_tweet(client: Any, headers: dict) -> None:
     Тестирование создание твита
     """
     tweet_data = {
-        "user_id": 2,
-        "content": "Hello!",
-        "medias_ids": [1],
-        "count_likes": 0,
+        "tweet_data": "Hello, World!",
+        "tweet_media_ids": [1],
     }
     resp = client.post("/api/tweets", data=tweet_data, headers=headers)
     assert resp.status_code == 201
@@ -30,6 +28,7 @@ def test_download_files_from_tweet(client: Any, headers: dict) -> None:
     with open("server/db/images/Hello World.png", "r") as file:
         resp = client.post("/api/medias", data=file, headers=headers)
         assert resp.status_code == 201
+        assert resp.data.decode() is not None
 
 
 def test_error_download_files_from_tweet(client: Any, headers: dict) -> None:
@@ -59,7 +58,7 @@ def test_delete_tweet(client: Any, headers: dict) -> None:
     """
    Тестирование удаления твита
    """
-    resp = client.delete("/api/tweets/1", headers=headers)
+    resp = client.delete("/api/tweets/2", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
 
@@ -81,7 +80,7 @@ def test_add_likes_tweet(client: Any, headers: dict) -> None:
     """
    Тестирование добавления лайка твиту
    """
-    resp = client.post("/api/tweets/2/likes", headers=headers)
+    resp = client.post("/api/tweets/1/likes", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
 
@@ -103,7 +102,7 @@ def test_delete_likes_tweet(client: Any, headers: dict) -> None:
     """
    Тестирование удаления лайка твиту
    """
-    resp = client.delete("/api/tweets/2/likes", headers=headers)
+    resp = client.delete("/api/tweets/1/likes", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
 
@@ -143,7 +142,7 @@ def test_error_delete_follow(client: Any, headers: dict) -> None:
     """
    Тестирование ошибки удаления несуществующей подписки на пользователя
    """
-    resp = client.delete("/api/users/2/follow", headers=headers)
+    resp = client.delete("/api/users/3/follow", headers=headers)
     assert resp.status_code == 400
     assert resp.data.decode() == {
         "result": False,
@@ -157,6 +156,7 @@ def test_creat_user_factory(db: SQLAlchemy) -> None:
    Тестирование создания фабрики пользователя
    """
     user = UserFactory()
+    db.session.add(user)
     db.session.commit()
     assert user.id is not None
-    assert len(db.session.query(User).all()) == 2
+    assert len(db.session.query(User).all()) == 3

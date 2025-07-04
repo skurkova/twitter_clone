@@ -49,7 +49,7 @@ class Media(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     filename = db.Column(db.String(150), nullable=False)
     file_path = db.Column(db.String(500), nullable=False)
-    tweet_id = db.Column(db.Integer, db.ForeignKey("tweets.id"), nullable=False)
+    tweet_id = db.Column(db.Integer, db.ForeignKey("tweets.id"))
 
     def __repr__(self) -> str:
         return f"Media {self.filename}"

@@ -4,7 +4,7 @@ info:
   description: API для корпоративного сервиса микроблога
   version: 1.0.0
 servers:
-  - url: http://localhost:5000/api
+  - url: http://localhost:5000
     description: Local server
 
 tags:
@@ -35,6 +35,7 @@ paths:
                     type: boolean
                   message:
                     type: string
+
   /api:
     get:
       summary: Главная страница API
@@ -92,8 +93,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
     get:
       tags:
         - Tweets
@@ -146,8 +145,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/tweets/{tweet_id}:
     delete:
@@ -197,8 +194,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/tweets/{tweet_id}/likes:
     post:
@@ -248,8 +243,7 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
+
     delete:
       tags:
         - Likes
@@ -297,8 +291,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/medias:
     post:
@@ -354,8 +346,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/users/{user_id}/follow:
     post:
@@ -392,8 +382,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
     delete:
       tags:
         - Follow
@@ -441,8 +429,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/users/me:
     get:
@@ -487,8 +473,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
   /api/users/{user_id}:
     get:
@@ -540,8 +524,6 @@ paths:
                     type: string
                   error_message:
                     type: string
-      security:
-        - ApiKeyAuth: []
 
 components:
   schemas:
@@ -621,3 +603,6 @@ components:
       type: apiKey
       in: header
       name: api-key
+
+security:
+  - ApiKeyAuth: []

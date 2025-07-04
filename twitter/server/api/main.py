@@ -7,8 +7,8 @@ from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 from werkzeug.wrappers import Response
 
-from twitter.server.db.models import Follow, Like, Media, Tweet, User, db
-from twitter.server.tests.factories import UserFactory
+from db.models import Follow, Like, Media, Tweet, User, db
+from tests.factories import UserFactory
 
 fake = Faker("en_US")
 UPLOAD_FOLDER = "server/db/uploads"
@@ -38,7 +38,7 @@ def create_app() -> Flask:
     """
     Запуск приложения
     """
-    app = Flask(__name__, static_folder="static", template_folder="templates")
+    app = Flask(__name__, static_folder="static", template_folder="/client/templates")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://admin:admin@db:5432/twitter"
     )
@@ -57,9 +57,16 @@ def create_app() -> Flask:
         """
         Заполнить базу данных пользователями
         """
-        users = [UserFactory() for _ in range(20)]
+        user_me = User(name="My Name", api_key="my-api-key")
+        users_api_keys = {user.api_key for user in db.session.query(User.api_key).all()}
+        if user_me.api_key not in users_api_keys:
+            db.session.add(user_me)
 
-        db.session.bulk_save_objects(users)
+        for _ in range(20):
+            user = UserFactory()
+            users_api_keys = {user.api_key for user in db.session.query(User.api_key).all()}
+            if user.api_key not in users_api_keys:
+                db.session.add(user)
         db.session.commit()
         return jsonify({"result": True, "message": "Database populated successfully"}), 200
 
@@ -78,6 +85,9 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
+        if isinstance(user, tuple):
+            return user
+
         tweet_data = request.form.get("tweet_data")
         tweet_media_ids = request.form.get("tweet_media_ids", "[]")
         new_tweet = Tweet(
@@ -87,7 +97,7 @@ def create_app() -> Flask:
         db.session.flush()
 
         for media_id in tweet_media_ids:
-            media = db.session.query(Media).get(media_id).one_or_none()
+            media = db.session.query(Media).get(media_id)
             if media is not None:
                 media.tweet_id = new_tweet.id
         db.session.commit()
@@ -129,15 +139,15 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
+        if isinstance(user, tuple):
+            return user
+
         tweet = (
             db.session.query(Tweet)
             .filter_by(id=tweet_id, user_id=user.id)
             .one_or_none()
         )
-        if tweet is not None:
-            db.session.delete(tweet)
-            return jsonify({"result": True}), 201
-        else:
+        if not tweet:
             return (
                 jsonify(
                     {
@@ -148,6 +158,10 @@ def create_app() -> Flask:
                 ),
                 400,
             )
+        else:
+            db.session.delete(tweet)
+            db.session.commit()
+            return jsonify({"result": True}), 201
 
     @app.route("/api/tweets/<int:tweet_id>/likes", methods=["POST"])
     def add_likes_tweet(tweet_id: int) -> Tuple[Response, int]:
@@ -157,14 +171,11 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
-        tweet = db.session.query(Tweet).get(tweet_id).one_or_none()
-        if tweet is not None:
-            tweet.count_likes += 1
-            like = Like(user_id=user.id, tweet_id=tweet.id)
-            db.session.add(like)
-            db.session.commit()
-            return jsonify({"result": True}), 201
-        else:
+        if isinstance(user, tuple):
+            return user
+
+        tweet = db.session.query(Tweet).get(tweet_id)
+        if not tweet:
             return (
                 jsonify(
                     {
@@ -175,6 +186,12 @@ def create_app() -> Flask:
                 ),
                 400,
             )
+        else:
+            tweet.count_likes += 1
+            like = Like(user_id=user.id, tweet_id=tweet.id)
+            db.session.add(like)
+            db.session.commit()
+            return jsonify({"result": True}), 201
 
     @app.route("/api/tweets/<int:tweet_id>/likes", methods=["DELETE"])
     def delete_likes_tweet(tweet_id: int) -> Tuple[Response, int]:
@@ -184,19 +201,16 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
+        if isinstance(user, tuple):
+            return user
+
         tweet = db.session.query(Tweet).get(tweet_id)
         like = (
             db.session.query(Like)
             .filter_by(user_id=user.id, tweet_id=tweet_id)
             .one_or_none()
         )
-        if like is not None:
-            if tweet.count_likes > 0:
-                tweet.count_likes -= 1
-                db.session.delete(like)
-                db.session.commit()
-                return jsonify({"result": True}), 201
-        else:
+        if not like:
             return (
                 jsonify(
                     {
@@ -207,6 +221,12 @@ def create_app() -> Flask:
                 ),
                 400,
             )
+        else:
+            if tweet.count_likes > 0:
+                tweet.count_likes -= 1
+                db.session.delete(like)
+                db.session.commit()
+                return jsonify({"result": True}), 201
 
     @app.route("/api/users/<int:user_id>/follow", methods=["POST"])
     def add_follow(user_id: int) -> Tuple[Response, int]:
@@ -215,6 +235,9 @@ def create_app() -> Flask:
         """
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
+
+        if isinstance(user, tuple):
+            return user
 
         follow = Follow(follower_id=user.id, followed_id=user_id)
         db.session.add(follow)
@@ -229,16 +252,15 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
+        if isinstance(user, tuple):
+            return user
+
         follow = (
             db.session.query(Follow)
             .filter_by(follower_id=user.id, followed_id=user_id)
             .one_or_none()
         )
-        if follow is not None:
-            db.session.delete(follow)
-            db.session.commit()
-            return jsonify({"result": True}), 201
-        else:
+        if not follow:
             return (
                 jsonify(
                     {
@@ -249,6 +271,10 @@ def create_app() -> Flask:
                 ),
                 400,
             )
+        else:
+            db.session.delete(follow)
+            db.session.commit()
+            return jsonify({"result": True}), 201
 
     @app.route("/api/tweets", methods=["GET"])
     def get_tweets() -> Tuple[Response, int]:
@@ -257,13 +283,28 @@ def create_app() -> Flask:
         """
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
+
+        if isinstance(user, tuple):
+            return user
+
         followed_users = [
             f.followed_id
             for f in db.session.query(Follow).filter_by(follower_id=user.id).all()
         ]
+        if not followed_users:
+            return (
+                jsonify(
+                    {
+                        "result": True,
+                        "tweets": [],
+                    }
+                ),
+                200,
+            )
+
         tweets = (
             db.session.query(Tweet)
-            .filter_by(Tweet.user_id.in_(followed_users))
+            .filter(Tweet.user_id.in_(followed_users))
             .order_by(Tweet.count_likes.desc())
             .all()
         )
@@ -272,13 +313,7 @@ def create_app() -> Flask:
                 {
                     "result": True,
                     "tweets": [
-                        {
-                            "id": tweet.id,
-                            "content": tweet.content,
-                            "attachments": tweet.medias,
-                            "author": tweet.author,
-                            "likes": tweet.likes,
-                        }
+                        tweet.to_json()
                         for tweet in tweets
                     ],
                 }
@@ -294,6 +329,9 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
+        if isinstance(user, tuple):
+            return user
+
         followers = [
             f.follower_id
             for f in db.session.query(Follow).filter_by(followed_id=user.id).all()
@@ -303,14 +341,21 @@ def create_app() -> Flask:
             for f in db.session.query(Follow).filter_by(follower_id=user.id).all()
         ]
 
-        followers_users = [
-            user
-            for user in db.session.query(User).filter(User.id.in_(followers)).all()
-        ]
-        following_users = [
-            user
-            for user in db.session.query(User).filter(User.id.in_(following)).all()
-        ]
+        if not followers:
+            followers_users = []
+        else:
+            followers_users = [
+                user.to_json()
+                for user in db.session.query(User).filter(User.id.in_(followers)).all()
+            ]
+
+        if not following:
+            following_users = []
+        else:
+            following_users = [
+                user.to_json()
+                for user in db.session.query(User).filter(User.id.in_(following)).all()
+            ]
 
         return (
             jsonify(
@@ -335,7 +380,11 @@ def create_app() -> Flask:
         api_key = request.headers.get("api-key")
         user = authenticate_user(api_key)
 
-        user_data = db.session.query(User).filter_by(id=user_id)
+        if isinstance(user, tuple):
+            return user
+
+        user_data = db.session.query(User).filter_by(id=user_id).one_or_none()
+
         followers = [
             f.follower_id
             for f in db.session.query(Follow).filter_by(followed_id=user_id).all()
@@ -345,14 +394,21 @@ def create_app() -> Flask:
             for f in db.session.query(Follow).filter_by(follower_id=user_id).all()
         ]
 
-        followers_users = [
-            user
-            for user in db.session.query(User).filter(User.id.in_(followers)).all()
-        ]
-        following_users = [
-            user
-            for user in db.session.query(User).filter(User.id.in_(following)).all()
-        ]
+        if not followers:
+            followers_users = []
+        else:
+            followers_users = [
+                user.to_json()
+                for user in db.session.query(User).filter(User.id.in_(followers)).all()
+            ]
+
+        if not following:
+            following_users = []
+        else:
+            following_users = [
+                user.to_json()
+                for user in db.session.query(User).filter(User.id.in_(following)).all()
+            ]
 
         return (
             jsonify(
@@ -370,8 +426,3 @@ def create_app() -> Flask:
         )
 
     return app
-
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(port=5000, debug=True)
