@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
-  title: Twitter
+  title: Twitter Clone API
   description: API для корпоративного сервиса микроблога
   version: 1.0.0
 servers:
-  - url: http://localhost:5000
+  - url: http://localhost:5000/api
     description: Local server
 
 tags:
@@ -110,28 +110,7 @@ paths:
                   tweets:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        content:
-                          type: string
-                        attachments:
-                          type: array
-                          items:
-                            type: object
-                            items:
-                              $ref: '#/components/schemas/Media'
-                        author:
-                          type: object
-                          items:
-                            $ref: '#/components/schemas/User'
-                        likes:
-                          type: array
-                          items:
-                            type: object
-                            items:
-                              $ref: '#/components/schemas/Like'
+                      $ref: '#/components/schemas/Tweet'
         '401':
           description: Пользователь неавторизован
           content:

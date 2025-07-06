@@ -1,4 +1,4 @@
-from api.main import create_app
+from api.main import create_app  # type: ignore
 
 app = create_app()
 

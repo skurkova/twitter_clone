@@ -1,14 +1,13 @@
 import os
+from typing import Tuple, Union
 
-from typing import Union, Tuple
+from db.models import Follow, Like, Media, Tweet, User, db  # type: ignore
 from faker import Faker
 from flasgger import Swagger
 from flask import Flask, jsonify, render_template, request
+from tests.factories import UserFactory  # type: ignore
 from werkzeug.utils import secure_filename
 from werkzeug.wrappers import Response
-
-from db.models import Follow, Like, Media, Tweet, User, db
-from tests.factories import UserFactory
 
 fake = Faker("en_US")
 UPLOAD_FOLDER = "server/db/uploads"
@@ -64,18 +63,23 @@ def create_app() -> Flask:
 
         for _ in range(20):
             user = UserFactory()
-            users_api_keys = {user.api_key for user in db.session.query(User.api_key).all()}
+            users_api_keys = {
+                user.api_key for user in db.session.query(User.api_key).all()
+            }
             if user.api_key not in users_api_keys:
                 db.session.add(user)
         db.session.commit()
-        return jsonify({"result": True, "message": "Database populated successfully"}), 200
+        return (
+            jsonify({"result": True, "message": "Database populated successfully"}),
+            200,
+        )
 
-    @app.route("/api", methods=["GET"])
-    def index() -> str:
-        """
-        Главная страница API.
-        """
-        return render_template("index.html")
+    # @app.route("/api", methods=["GET"])
+    # def index() -> str:
+    #     """
+    #     Главная страница API.
+    #     """
+    #     return render_template("index.html")
 
     @app.route("/api/tweets", methods=["POST"])
     def create_tweet() -> Tuple[Response, int]:
@@ -312,10 +316,7 @@ def create_app() -> Flask:
             jsonify(
                 {
                     "result": True,
-                    "tweets": [
-                        tweet.to_json()
-                        for tweet in tweets
-                    ],
+                    "tweets": [tweet.to_json() for tweet in tweets],
                 }
             ),
             200,

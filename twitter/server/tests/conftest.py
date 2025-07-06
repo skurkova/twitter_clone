@@ -4,9 +4,9 @@ from flask import Flask
 from flask.testing import FlaskClient
 from flask_sqlalchemy import SQLAlchemy
 
-from api.main import create_app
-from db.models import Tweet, User
-from db.models import db as _db
+from api.main import create_app  # type: ignore
+from db.models import Tweet, User  # type: ignore
+from db.models import db as _db  # type: ignore
 
 
 @pytest.fixture()
@@ -25,9 +25,7 @@ def app() -> Flask:
             User(id=2, name="Ivan Petrov", api_key="api-key"),
         ]
 
-        tweet = Tweet(
-            id=1, user_id=2, content="Hello!", medias_ids=[], count_likes=0
-        )
+        tweet = Tweet(id=1, user_id=2, content="Hello!", medias_ids=[], count_likes=0)
 
         _db.session.bulk_save_objects(users)
         _db.session.add(tweet)
@@ -50,7 +48,7 @@ def client(app: Flask) -> FlaskClient:
 @pytest.fixture
 def db(app: Flask) -> SQLAlchemy:
     """
-   Фикстура тестовой базы данных
+    Фикстура тестовой базы данных
     """
     with app.app_context():
         yield _db

@@ -1,10 +1,10 @@
-import pytest
-from faker import Faker
 from typing import Any
-from flask_sqlalchemy import SQLAlchemy
 
-from db.models import User
+import pytest
+from db.models import User  # type: ignore
 from factories import UserFactory
+from faker import Faker
+from flask_sqlalchemy import SQLAlchemy
 
 fake = Faker("en_US")
 
@@ -47,8 +47,8 @@ def test_error_download_files_from_tweet(client: Any, headers: dict) -> None:
 @pytest.mark.parametrize("route", ["/api/tweets", "/api/users/me", "/api/users/1"])
 def test_route_status(client: Any, headers: dict, route: str) -> None:
     """
-   Тестирование GET-роутов
-   """
+    Тестирование GET-роутов
+    """
     resp = client.get(route, headers=headers)
     assert resp.status_code == 200
     assert resp.data.decode() is not None
@@ -56,8 +56,8 @@ def test_route_status(client: Any, headers: dict, route: str) -> None:
 
 def test_delete_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование удаления твита
-   """
+    Тестирование удаления твита
+    """
     resp = client.delete("/api/tweets/2", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
@@ -65,8 +65,8 @@ def test_delete_tweet(client: Any, headers: dict) -> None:
 
 def test_error_delete_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование ошибки при удалении несуществующего твита
-   """
+    Тестирование ошибки при удалении несуществующего твита
+    """
     resp = client.delete("/api/tweets/5", headers=headers)
     assert resp.status_code == 400
     assert resp.data.decode() == {
@@ -78,8 +78,8 @@ def test_error_delete_tweet(client: Any, headers: dict) -> None:
 
 def test_add_likes_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование добавления лайка твиту
-   """
+    Тестирование добавления лайка твиту
+    """
     resp = client.post("/api/tweets/1/likes", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
@@ -87,8 +87,8 @@ def test_add_likes_tweet(client: Any, headers: dict) -> None:
 
 def test_error_add_likes_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование ошибки при добавлении лайка несуществующему твиту
-   """
+    Тестирование ошибки при добавлении лайка несуществующему твиту
+    """
     resp = client.post("/api/tweets/5/likes", headers=headers)
     assert resp.status_code == 400
     assert resp.data.decode() == {
@@ -100,8 +100,8 @@ def test_error_add_likes_tweet(client: Any, headers: dict) -> None:
 
 def test_delete_likes_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование удаления лайка твиту
-   """
+    Тестирование удаления лайка твиту
+    """
     resp = client.delete("/api/tweets/1/likes", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
@@ -109,8 +109,8 @@ def test_delete_likes_tweet(client: Any, headers: dict) -> None:
 
 def test_error_delete_likes_tweet(client: Any, headers: dict) -> None:
     """
-   Тестирование ошибки при удалении несуществующего лайка твиту
-   """
+    Тестирование ошибки при удалении несуществующего лайка твиту
+    """
     resp = client.delete("/api/tweets/5/likes", headers=headers)
     assert resp.status_code == 400
     assert resp.data.decode() == {
@@ -122,8 +122,8 @@ def test_error_delete_likes_tweet(client: Any, headers: dict) -> None:
 
 def test_add_follow(client: Any, headers: dict) -> None:
     """
-   Тестирование подписки на другого пользователя
-   """
+    Тестирование подписки на другого пользователя
+    """
     resp = client.post("/api/users/2/follow", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
@@ -131,8 +131,8 @@ def test_add_follow(client: Any, headers: dict) -> None:
 
 def test_delete_follow(client: Any, headers: dict) -> None:
     """
-   Тестирование отписки от пользователя
-   """
+    Тестирование отписки от пользователя
+    """
     resp = client.delete("/api/users/2/follow", headers=headers)
     assert resp.status_code == 201
     assert resp.data.decode() == {"result": True}
@@ -140,8 +140,8 @@ def test_delete_follow(client: Any, headers: dict) -> None:
 
 def test_error_delete_follow(client: Any, headers: dict) -> None:
     """
-   Тестирование ошибки удаления несуществующей подписки на пользователя
-   """
+    Тестирование ошибки удаления несуществующей подписки на пользователя
+    """
     resp = client.delete("/api/users/3/follow", headers=headers)
     assert resp.status_code == 400
     assert resp.data.decode() == {
@@ -153,8 +153,8 @@ def test_error_delete_follow(client: Any, headers: dict) -> None:
 
 def test_creat_user_factory(db: SQLAlchemy) -> None:
     """
-   Тестирование создания фабрики пользователя
-   """
+    Тестирование создания фабрики пользователя
+    """
     user = UserFactory()
     db.session.add(user)
     db.session.commit()

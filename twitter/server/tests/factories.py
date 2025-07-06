@@ -3,7 +3,7 @@ import string
 
 import factory
 
-from db.models import User, db
+from db.models import User, db  # type: ignore
 
 
 class UserFactory(factory.alchemy.SQLAlchemyModelFactory):
