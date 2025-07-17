@@ -4,7 +4,7 @@ from typing import Tuple, Union
 from db.models import Follow, Like, Media, Tweet, User, db  # type: ignore
 from faker import Faker
 from flasgger import Swagger
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request, Response, send_from_directory
 from tests.factories import UserFactory  # type: ignore
 from werkzeug.utils import secure_filename
 from werkzeug.wrappers import Response
@@ -37,7 +37,7 @@ def create_app() -> Flask:
     """
     Запуск приложения
     """
-    app = Flask(__name__, static_folder="static", template_folder="/client/templates")
+    app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://admin:admin@db:5432/twitter"
     )
@@ -45,21 +45,37 @@ def create_app() -> Flask:
     db.init_app(app)
     with app.app_context():
         db.create_all()
-    Swagger(app, template_file="swagger.yaml")
+    Swagger(app, template_file="swagger_cals.yaml")
 
     @app.teardown_appcontext
     def shutdown_session(exception=None) -> None:
         db.session.remove()
 
-    @app.route("/", methods=["GET"])
+    @app.route("/login")
+    def read_main():
+        return send_from_directory("static", "index.html")
+
+    @app.route("/static/<path:path>")
+    def send_static(path):
+        return send_from_directory("static", path)
+
+    @app.route("/js/<path:path>")
+    def send_js(path):
+        return send_from_directory("static/js", path)
+
+    @app.route("/css/<path:path>")
+    def send_css(path):
+        return send_from_directory("static/css", path)
+
+    @app.route("/api", methods=["GET"])
     def populating_db() -> Tuple[Response, int]:
         """
         Заполнить базу данных пользователями
         """
-        user_me = User(name="My Name", api_key="my-api-key")
+        user_test = User(name="test", api_key="test")
         users_api_keys = {user.api_key for user in db.session.query(User.api_key).all()}
-        if user_me.api_key not in users_api_keys:
-            db.session.add(user_me)
+        if user_test.api_key not in users_api_keys:
+            db.session.add(user_test)
 
         for _ in range(20):
             user = UserFactory()
@@ -73,13 +89,6 @@ def create_app() -> Flask:
             jsonify({"result": True, "message": "Database populated successfully"}),
             200,
         )
-
-    # @app.route("/api", methods=["GET"])
-    # def index() -> str:
-    #     """
-    #     Главная страница API.
-    #     """
-    #     return render_template("index.html")
 
     @app.route("/api/tweets", methods=["POST"])
     def create_tweet() -> Tuple[Response, int]:
