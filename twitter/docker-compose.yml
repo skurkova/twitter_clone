@@ -1,18 +1,18 @@
 version: '3.2'
 services:
-  client:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
-    ports:
-      - "8080:80"
-    depends_on:
-      - server
-    restart: unless-stopped
-    networks:
-      - my_network
-    volumes:
-      - ./client/static:/client/static
+#  client:
+#    build:
+#      context: .
+#      dockerfile: client/Dockerfile
+#    ports:
+#      - "8080:80"
+#    depends_on:
+#      - server
+#    restart: unless-stopped
+#    networks:
+#      - my_network
+#    volumes:
+#      - ./client/static:/client/static
 
   server:
     build:
@@ -29,7 +29,7 @@ services:
       - FLASK_ENV=development
     volumes:
       - ./server/db/uploads:/server/db/uploads
-      - ./client/static:/server/api/static
+      - ./server/api/static:/server/api/static
 
   db:
     image: postgres:15-alpine

@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.wrappers import Response
 
 fake = Faker("en_US")
-UPLOAD_FOLDER = "server/db/uploads"
+UPLOAD_FOLDER = "db/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -37,7 +37,7 @@ def create_app() -> Flask:
     """
     Запуск приложения
     """
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="static", template_folder="static")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://admin:admin@db:5432/twitter"
     )
