@@ -4,7 +4,7 @@ from typing import Tuple, Union
 from db.models import Follow, Like, Media, Tweet, User, db  # type: ignore
 from faker import Faker
 from flasgger import Swagger
-from flask import Flask, jsonify, request, Response, send_from_directory
+from flask import Flask, jsonify, request, Response, send_from_directory, render_template
 from tests.factories import UserFactory  # type: ignore
 from werkzeug.utils import secure_filename
 from werkzeug.wrappers import Response
@@ -24,7 +24,7 @@ def authenticate_user(api_key: str) -> Union[User, Tuple[Response, int]]:
             jsonify(
                 {
                     "result": False,
-                    "error_type": "User unauthorized",
+                    "error_type": "InvalidInput",
                     "error_message": "Invalid api-key",
                 }
             ),
@@ -37,14 +37,12 @@ def create_app() -> Flask:
     """
     Запуск приложения
     """
-    app = Flask(__name__, static_folder="static", template_folder="static")
+    app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://admin:admin@db:5432/twitter"
     )
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
     db.init_app(app)
-    with app.app_context():
-        db.create_all()
     Swagger(app, template_file="swagger_cals.yaml")
 
     @app.teardown_appcontext
@@ -53,7 +51,7 @@ def create_app() -> Flask:
 
     @app.route("/login")
     def read_main():
-        return send_from_directory("static", "index.html")
+        return render_template("index.html")
 
     @app.route("/static/<path:path>")
     def send_static(path):
@@ -76,6 +74,7 @@ def create_app() -> Flask:
         users_api_keys = {user.api_key for user in db.session.query(User.api_key).all()}
         if user_test.api_key not in users_api_keys:
             db.session.add(user_test)
+            db.session.commit()
 
         for _ in range(20):
             user = UserFactory()
@@ -84,9 +83,10 @@ def create_app() -> Flask:
             }
             if user.api_key not in users_api_keys:
                 db.session.add(user)
-        db.session.commit()
+            db.session.commit()
+        users = db.session.query(User).all()
         return (
-            jsonify({"result": True, "message": "Database populated successfully"}),
+            jsonify({"result": True, "users": [user.to_json() for user in users]}),
             200,
         )
 
@@ -137,7 +137,7 @@ def create_app() -> Flask:
                 jsonify(
                     {
                         "result": False,
-                        "error_type": "InvalidInput",
+                        "error_type": "NotFound",
                         "error_message": "File not found",
                     }
                 ),
@@ -252,10 +252,39 @@ def create_app() -> Flask:
         if isinstance(user, tuple):
             return user
 
-        follow = Follow(follower_id=user.id, followed_id=user_id)
-        db.session.add(follow)
-        db.session.commit()
-        return jsonify({"result": True}), 201
+        if user.id != user_id:
+            follow = (
+                db.session.query(Follow)
+                .filter_by(follower_id=user.id, followed_id=user_id)
+                .one_or_none()
+            )
+            if not follow:
+                follow = Follow(follower_id=user.id, followed_id=user_id)
+                db.session.add(follow)
+                db.session.commit()
+                return jsonify({"result": True}), 201
+            else:
+                return (
+                    jsonify(
+                        {
+                            "result": False,
+                            "error_type": "AlreadyExists",
+                            "error_message": "Follow already exists.",
+                        }
+                    ),
+                    400,
+                )
+        else:
+            return (
+                jsonify(
+                    {
+                        "result": False,
+                        "error_type": "FollowError",
+                        "error_message": "You can't follow to yourself.",
+                    }
+                ),
+                400,
+            )
 
     @app.route("/api/users/<int:user_id>/follow", methods=["DELETE"])
     def delete_follow(user_id: int) -> Tuple[Response, int]:
