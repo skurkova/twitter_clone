@@ -55,6 +55,12 @@ paths:
       tags:
         - Tweets
       summary: Создать новый твит
+      parameters:
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       requestBody:
         required: true
         content:
@@ -99,6 +105,12 @@ paths:
       tags:
         - Tweets
       summary: Получить ленту твитов
+      parameters:
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Лента твитов
@@ -139,6 +151,11 @@ paths:
           schema:
             type: integer
           description: ID твита
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Твит успешно удален
@@ -188,6 +205,11 @@ paths:
           schema:
             type: integer
           description: ID твита
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Лайк успешно добавлен
@@ -236,6 +258,11 @@ paths:
           schema:
             type: integer
           description: ID твита
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Лайк успешно удален
@@ -340,6 +367,11 @@ paths:
           schema:
             type: integer
           description: ID пользователя
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Подписка успешно добавлена
@@ -387,6 +419,11 @@ paths:
           schema:
             type: integer
           description: ID пользователя
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Подписка успешно удалена
@@ -429,6 +466,12 @@ paths:
       tags:
         - Users
       summary: Получить информацию о своём профиле
+      parameters:
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Информация о пользователе
@@ -480,6 +523,11 @@ paths:
           schema:
             type: integer
           description: ID пользователя
+        - in: header
+          name: api-key
+          required: true
+          type: string
+          description: API-ключ пользователя для аутентификации
       responses:
         '200':
           description: Информация о пользователе
@@ -560,6 +608,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Media'
+      required:
+        - id
+        - user_id
+        - content
 
     Media:
       type: object
@@ -591,12 +643,3 @@ components:
         - id
         - user_id
         - tweet_id
-
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: api-key
-
-security:
-  - ApiKeyAuth: []
