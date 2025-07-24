@@ -3,6 +3,7 @@ from typing import Tuple, Union
 
 from db.models import Follow, Like, Media, Tweet, User, db  # type: ignore
 from faker import Faker
+from flask_cors import CORS
 from flasgger import Swagger
 from flask import Flask, jsonify, request, Response, send_from_directory, render_template
 from tests.factories import UserFactory  # type: ignore
@@ -37,11 +38,15 @@ def create_app() -> Flask:
     """
     Запуск приложения
     """
-    app = Flask(__name__, static_folder="static", template_folder="templates")
+    # app = Flask(__name__, template_folder="templates")
+    app = Flask(__name__)
+    CORS(app, origins=["http://localhost:8080"], headers=["Content-Type", "api-key"])
+
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://admin:admin@db:5432/twitter"
     )
     app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+    app.config['DEBUG'] = True
     db.init_app(app)
     Swagger(app, template_file="swagger_cals.yaml")
 
@@ -49,21 +54,25 @@ def create_app() -> Flask:
     def shutdown_session(exception=None) -> None:
         db.session.remove()
 
-    @app.route("/login")
-    def read_main():
-        return render_template("index.html")
-
-    @app.route("/static/<path:path>")
-    def send_static(path):
-        return send_from_directory("static", path)
-
-    @app.route("/js/<path:path>")
-    def send_js(path):
-        return send_from_directory("static/js", path)
-
-    @app.route("/css/<path:path>")
-    def send_css(path):
-        return send_from_directory("static/css", path)
+    # @app.route("/login")
+    # def read_main():
+    #     return render_template("index.html")
+    #
+    # @app.route("/static/<path:path>")
+    # def send_static(path):
+    #     return send_from_directory("static", path)
+    #
+    # @app.route("/images/<path:path>")
+    # def send_images(path):
+    #     return send_from_directory("static/images", path)
+    #
+    # @app.route("/js/<path:path>")
+    # def send_js(path):
+    #     return send_from_directory("static/js", path)
+    #
+    # @app.route("/css/<path:path>")
+    # def send_css(path):
+    #     return send_from_directory("static/css", path)
 
     @app.route("/api", methods=["GET"])
     def populating_db() -> Tuple[Response, int]:
@@ -122,6 +131,12 @@ def create_app() -> Flask:
         """
         Загрузить файлы из твита
         """
+        api_key = request.headers.get("api-key")
+        user = authenticate_user(api_key)
+
+        if isinstance(user, tuple):
+            return user
+
         file = request.files["file"]
         if file:
             file_name = secure_filename(file.filename)

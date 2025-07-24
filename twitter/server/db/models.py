@@ -23,7 +23,7 @@ class Tweet(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    medias_ids = db.Column(db.ARRAY(db.Integer))
+    medias_ids = db.Column(db.ARRAY(db.Integer), default=[])
     count_likes = db.Column(db.Integer, default=0)
     author = db.relationship("User", backref="tweets", lazy=True)
     likes = db.relationship(
