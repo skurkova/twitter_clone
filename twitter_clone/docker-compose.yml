@@ -1,0 +1,63 @@
+services:
+  client:
+    container_name: twitter_clone_client
+    image: nginx
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      server:
+        condition: service_started
+    restart: always
+    networks:
+      - twitter_network
+    volumes:
+      - ./server/db/uploads:/usr/share/nginx/html/static/images
+
+  server:
+    container_name: twitter_clone_server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - twitter_network
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - ./server/db/uploads:/server/db/uploads
+      - ./server/tests:/server/tests
+      - ./server/tests/images:/server/tests/images
+      - ./server/tests/test_uploads:/server/tests/test_uploads
+
+  db:
+    container_name: twitter_clone_db
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=twitter_clone
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d twitter_clone -U admin" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+    ports:
+      - "5432:5432"
+    networks:
+      - twitter_network
+    volumes:
+      - ./db/:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    command: -c logging_collector=on -c log_directory=log/ -c log_destination='stderr' -c log_filename='postgresql-%Y-%m-%d_%H%M%S.log' -c log_statement='all'
+
+networks:
+  twitter_network:
+    driver: bridge
