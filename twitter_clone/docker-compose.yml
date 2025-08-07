@@ -1,7 +1,7 @@
 services:
   client:
     container_name: twitter_clone_client
-    image: nginx
+    image: nginx:latest
     build:
       context: .
       dockerfile: client/Dockerfile
@@ -14,6 +14,8 @@ services:
     networks:
       - twitter_network
     volumes:
+      - ./client/nginx.conf:/etc/nginx/nginx.conf
+      - ./client/static:/usr/share/nginx/html/static
       - ./server/db/uploads:/usr/share/nginx/html/static/images
 
   server:
