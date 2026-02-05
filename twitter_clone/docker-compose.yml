@@ -52,7 +52,7 @@ services:
       timeout: 60s
       retries: 5
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - twitter_network
     volumes:
