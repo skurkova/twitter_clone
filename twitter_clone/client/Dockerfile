@@ -2,7 +2,7 @@ FROM nginx:latest
 
 RUN apt-get update && apt-get install -y nginx
 
-RUN rm /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY client/static /usr/share/nginx/html/static
 COPY client/index.html /usr/share/nginx/html

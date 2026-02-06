@@ -61,7 +61,7 @@ API соответствует стандарту `OpenAPI 2.0.0` и включ�
    `docker-compose up --build -d`
 4. Открываем браузер и переходим по адресам:
    - Фронтенд: http://localhost:8080/
-   - API: http://localhost:5000/api/
+   - API: http://localhost:8080/api/
    - Документация API (Swagger): http://localhost:5000/apidocs/
 
 
