@@ -50,9 +50,9 @@ API соответствует стандарту `OpenAPI 2.0.0` и включ�
 
 
 ### Запуск сервиса
-1. [Клонируем репозиторий](https://gitlab.skillbox.ru/samira_kurkova/python_advanced_diploma.git) с GitLab:
+1. Клонируем репозиторий с GitHub:
 
-   `git clone https://gitlab.skillbox.ru/samira_kurkova/python_advanced_diploma/twitter_clone.git`
+   `git clone https://github.com/skurkova/twitter_clone.git`
 2. Переходим в каталог проекта:
    
    `cd twitter_clone`
